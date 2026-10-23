@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>For Aakanksha</title>
+<style>
+  :root{--bg:#fff7f0;--ink:#3b2a4a;--accent:#e8618c;--accent2:#6c5ce7;--card:#ffffff}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:linear-gradient(160deg,#fff7f0,#fde7f0 50%,#e8e4ff);color:var(--ink);min-height:100vh;display:flex;justify-content:center;padding:24px 16px}
+  main{max-width:520px;width:100%;text-align:center}
+  h1{font-size:1.9rem;margin:8px 0 4px}
+  p.sub{margin:0 0 18px;opacity:.8}
+  .stats{display:flex;justify-content:center;gap:18px;margin-bottom:14px;font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .tile{aspect-ratio:1;perspective:600px;cursor:pointer;border:0;background:none;padding:0}
+  .inner{position:relative;width:100%;height:100%;transition:transform .45s;transform-style:preserve-3d}
+  .tile.open .inner,.tile.done .inner{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:14px;backface-visibility:hidden;font-size:2.2rem;box-shadow:0 3px 10px rgba(60,40,90,.15)}
+  .front{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:1.6rem}
+  .back{background:var(--card);transform:rotateY(180deg)}
+  .tile.done .back{background:#e6fbe9}
+  button.btn{margin-top:18px;padding:10px 22px;border:0;border-radius:999px;background:var(--accent2);color:#fff;font-size:1rem;cursor:pointer}
+  #note{display:none;margin-top:22px;background:var(--card);border-radius:18px;padding:24px 22px;box-shadow:0 8px 28px rgba(60,40,90,.18);text-align:left;line-height:1.6;animation:pop .6s ease}
+  #note h2{margin-top:0;text-align:center}
+  #note .sig{text-align:right;font-style:italic;margin-bottom:0}
+  @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+  canvas{position:fixed;inset:0;pointer-events:none}
+</style>
+</head>
+<body>
+<main>
+  <h1>🩺 Aakanksha's Last Shift 🎉</h1>
+  <p class="sub">One final task before you clock out: match all the pairs!</p>
+  <div class="stats"><span>Moves: <span id="moves">0</span></span><span>Pairs: <span id="pairs">0</span>/8</span></div>
+  <div class="grid" id="grid"></div>
+  <button class="btn" id="reset">Shuffle again</button>
+
+  <section id="note">
+    <h2>Mission accomplished! 🏆</h2>
+    <p>Dear Aakanksha,</p>
+    <p>Today is your last working day, and the team will not be the same without you. Thank you for your hard work, your contributions and for always being someone people could count on.</p>
+    <p>As you move on to your next chapter, I wish you every success, great health, and plenty of happiness. May your next role bring you big wins, wonderful people, and zero last-minute review comments. 😄</p>
+    <p>All the very best for your future endeavours. Keep shining, and keep in touch!</p>
+<p>Annnddddd, dont forget to refer us. 😂</p>
+    <p class="sig">With warm wishes,<br>Your Newest Team Lead (Kaushik Desai) &amp; the whole Unit 3 Medical Team 💜</p>
+  </section>
+</main>
+<canvas id="confetti"></canvas>
+
+<script>
+const icons=["🩺","💊","🧬","🔬","📋","☕","💉","🧪"];
+const grid=document.getElementById("grid"),movesEl=document.getElementById("moves"),pairsEl=document.getElementById("pairs"),note=document.getElementById("note");
+let first=null,lock=false,moves=0,pairs=0;
+
+function build(){
+  grid.innerHTML="";note.style.display="none";moves=pairs=0;first=null;lock=false;
+  movesEl.textContent=0;pairsEl.textContent=0;
+  const deck=[...icons,...icons].sort(()=>Math.random()-.5);
+  deck.forEach(ic=>{
+    const t=document.createElement("button");
+    t.className="tile";t.dataset.v=ic;t.setAttribute("aria-label","card");
+    t.innerHTML='<div class="inner"><div class="face front">?</div><div class="face back">'+ic+'</div></div>';
+    t.addEventListener("click",()=>flip(t));
+    grid.appendChild(t);
+  });
+}
+function flip(t){
+  if(lock||t.classList.contains("open")||t.classList.contains("done"))return;
+  t.classList.add("open");
+  if(!first){first=t;return;}
+  movesEl.textContent=++moves;
+  if(first.dataset.v===t.dataset.v){
+    first.classList.replace("open","done");t.classList.replace("open","done");
+    first=null;pairsEl.textContent=++pairs;
+    if(pairs===icons.length)win();
+  }else{
+    lock=true;const a=first;first=null;
+    setTimeout(()=>{a.classList.remove("open");t.classList.remove("open");lock=false;},750);
+  }
+}
+function win(){
+  setTimeout(()=>{note.style.display="block";note.scrollIntoView({behavior:"smooth"});burst();},500);
+}
+document.getElementById("reset").onclick=build;
+
+const cv=document.getElementById("confetti"),cx=cv.getContext("2d");
+function burst(){
+  cv.width=innerWidth;cv.height=innerHeight;
+  const cols=["#e8618c","#6c5ce7","#fdcb6e","#00b894","#74b9ff"];
+  const ps=Array.from({length:160},()=>({x:innerWidth/2,y:innerHeight/3,vx:(Math.random()-.5)*14,vy:Math.random()*-12-2,s:5+Math.random()*6,c:cols[Math.random()*5|0],r:Math.random()*6}));
+  let f=0;
+  (function step(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    ps.forEach(p=>{p.vy+=.25;p.x+=p.vx;p.y+=p.vy;p.r+=.2;cx.fillStyle=p.c;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);cx.restore();});
+    if(++f<220)requestAnimationFrame(step);else cx.clearRect(0,0,cv.width,cv.height);
+  })();
+}
+build();
+</script>
+</body>
+</html>
